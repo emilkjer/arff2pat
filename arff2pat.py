@@ -1,15 +1,17 @@
 #!/usr/bin/python
 
 def read_file(filename):
+  # Open the file. Room for improvement, but for now
+  # remember to close it after reading.
   f = open(filename, 'r')
   return f
 
 def write_file(filename, content):
+  #Write file with correct headers
   f = open(filename, 'w')
   f.write("SNNS pattern definition file V3.2\n")
   f.write("generated at Mon Apr 25 15:58:23 1994\n")
   f.write("\n")
-#  f.write("No. of patterns : "+str(content['no_of_patterns'])+"\n")
   f.write("No. of patterns : "+str(len(content['data']))+"\n")
   f.write("No. of input units : "+str(content['no_of_inputs'])+"\n")
   f.write("No. of output units : "+str(content['no_of_outputs'])+"\n")
@@ -71,9 +73,8 @@ def substract_information_from_file(file_object):
       attribute = read_attribute_line(line)
       list_attributes.append(attribute)
 
-    #Read data
+    #Read all data to the end of the file
     if line.startswith('@data'):
-
       for line_data_raw in file_object:
         data = read_data_line(line_data_raw)
         list_data.append(data)
@@ -87,7 +88,8 @@ def shuffle_list(list_raw):
   return list_raw
 
 def split_data(data_list_raw, split_sizes):
-  
+  #To get train, test and validation data split it in defined sizes
+  #Update, we need to stratisfy the data and will do that with Weka
   train_list = data_list_raw[:split_sizes['train']:]
 
   test_from = split_sizes['train']
@@ -122,6 +124,7 @@ def find_and_return_bin_array(value, in_array):
   array_index = find_touple_index(value, in_array)
   return return_binary_array(array_index, in_array)
 
+
 def translate_list_to_binary(data_list_raw, array_list):
   data_list_translated = []
   for data_cur in data_list_raw:
@@ -129,25 +132,34 @@ def translate_list_to_binary(data_list_raw, array_list):
     bad_line = False
     for i, att in enumerate(array_list):
       val = data_cur[i]
+
       #make sure the value is not a question mark
+      #REMARK this is a decision based on the data
       if val == '?':
         # data_list_cur.append(val)
         # The line is invalid and should be skipped
         bad_line = True
+
       elif att == 'real':
+        #Keep numeric values
         data_list_cur.append(float(val))
+
       else:
+        #Convert attributes of arrays to binary values.
+        #REMARK this can be done differently
         val_translated = find_and_return_bin_array(val, att)
         val_trans_clean = convert_list_to_string(val_translated)
         data_list_cur.append(val_trans_clean)
-    #If something is wrong with the line, skip it
+    #If something is wrong with the line, skip it...
     if bad_line:
       continue
     data_list_translated.append(data_list_cur)
   return data_list_translated
 
 
+
 file_base_dir = '/home/emil/study/rmit/semester4/data_minig/assignments/ass2/'
+file_base_dir_out  = '/home/emil/study/rmit/semester4/data_minig/assignments/ass2/data/out/'
 file_name = 'heart-c.arff'
 file_location = file_base_dir + file_name
 file_raw = read_file(file_location)
@@ -169,7 +181,6 @@ data_split = split_data(data_list_translated, split_sizes)
 #As an excample print the test data:
 #print data_split['test']
 
-
 content_dict = {                 
                 'no_of_inputs'   : 25,
                 'no_of_outputs'  : 5
@@ -178,20 +189,20 @@ content_dict = {
 #### TRAIN FILE ####
 content_dict['no_of_patterns'] = split_sizes['train']
 content_dict['data'] = data_split['train']
-file_name_out = 'data/heart-c-train.pat'
-file_location_out = file_base_dir + file_name_out
+file_name_out = 'heart-c-train.pat'
+file_location_out = file_base_dir_out + file_name_out
 write_file(file_location_out, content_dict)
 
 ##### TEST FILE ####
 content_dict['no_of_patterns'] = split_sizes['test']
 content_dict['data'] = data_split['test']
-file_name_out = 'data/heart-c-test.pat'
-file_location_out = file_base_dir + file_name_out
+file_name_out = 'heart-c-test.pat'
+file_location_out = file_base_dir_out + file_name_out
 write_file(file_location_out, content_dict)
 
 #### VALIDATE FILE ####
 content_dict['no_of_patterns'] = split_sizes['validate']
 content_dict['data'] = data_split['validate']
-file_name_out = 'data/heart-c-valid.pat'
-file_location_out = file_base_dir + file_name_out
+file_name_out = 'heart-c-valid.pat'
+file_location_out = file_base_dir_out + file_name_out
 write_file(file_location_out, content_dict)

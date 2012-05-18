@@ -21,6 +21,17 @@ def write_file(filename, content):
     f.write(data_string+"\n")
   f.close()
 
+def save_file_to_pat(content_dict,
+              file_base_dir_out, arff_name_in,
+              no_of_patterns, out_name):
+  #Save and write the file
+  #REMARK Quite a lot of arguments here...
+  content_dict['no_of_patterns'] = no_of_patterns
+  file_name_temp = arff_name_in+'-'+out_name+'.pat'
+  file_location_out = file_base_dir_out + file_name_temp
+  write_file(file_location_out, content_dict)
+
+
 def convert_list_to_string(list_raw):
   #Merge the list and replace the comma with a space
   list_string = ' '.join(map(str, list_raw))    
@@ -157,52 +168,75 @@ def translate_list_to_binary(data_list_raw, array_list):
   return data_list_translated
 
 
+###################
+##   SETTINGS    ##
+###################
 
 file_base_dir = '/home/emil/study/rmit/semester4/data_minig/assignments/ass2/'
 file_base_dir_out  = '/home/emil/study/rmit/semester4/data_minig/assignments/ass2/data/out/'
-file_name = 'heart-c.arff'
-file_location = file_base_dir + file_name
-file_raw = read_file(file_location)
-file_dict = substract_information_from_file(file_raw)
-file_raw.close()
 
-data_list = file_dict['list_data']
-attributes_list = file_dict['list_attributes']
+arff_name_in = 'heart-c'
+pat_name_out = 'heart-c'
 
-
-#shuffle the data
-shuffle_list(data_list)
-
-#Translate the data to binary values
-data_list_translated = translate_list_to_binary(data_list, attributes_list)
-
-split_sizes = {'train' : 200, 'test' : 53, 'validate' : 50}
-data_split = split_data(data_list_translated, split_sizes)
-#As an excample print the test data:
-#print data_split['test']
-
-content_dict = {                 
+content_dict = {  
                 'no_of_inputs'   : 25,
                 'no_of_outputs'  : 5
                }
 
-#### TRAIN FILE ####
-content_dict['no_of_patterns'] = split_sizes['train']
-content_dict['data'] = data_split['train']
-file_name_out = 'heart-c-train.pat'
-file_location_out = file_base_dir_out + file_name_out
-write_file(file_location_out, content_dict)
+split_sizes = {'train' : 200, 'test' : 53, 'validate' : 50}
+split_data_bool = True
+###################
 
-##### TEST FILE ####
-content_dict['no_of_patterns'] = split_sizes['test']
-content_dict['data'] = data_split['test']
-file_name_out = 'heart-c-test.pat'
-file_location_out = file_base_dir_out + file_name_out
-write_file(file_location_out, content_dict)
 
-#### VALIDATE FILE ####
-content_dict['no_of_patterns'] = split_sizes['validate']
-content_dict['data'] = data_split['validate']
-file_name_out = 'heart-c-valid.pat'
-file_location_out = file_base_dir_out + file_name_out
-write_file(file_location_out, content_dict)
+
+file_location = file_base_dir + arff_name_in + '.arff'
+file_raw = read_file(file_location)
+file_dict = substract_information_from_file(file_raw)
+file_raw.close()
+
+#Get the data and attributes as out
+data_list = file_dict['list_data']
+attributes_list = file_dict['list_attributes']
+
+#Translate the data to binary values
+data_list = translate_list_to_binary(data_list, attributes_list)
+
+if split_data_bool:
+  #Save the data for test, train and validation
+
+  #shuffle the data
+  shuffle_list(data_list)
+
+  data_dict = split_data(data_list, split_sizes)
+  #As an excample print the test data:
+  #print data_dict['test']
+
+  #### TRAIN FILE ####
+  content_dict['data'] = data_dict['train']
+  no_of_patterns = split_sizes['train']
+  out_name = 'train'
+  save_file_to_pat(content_dict,
+              file_base_dir_out, arff_name_in,
+              no_of_patterns, out_name)
+
+  #### TEST FILE ####
+  content_dict['data'] = data_dict['test']
+  no_of_patterns = split_sizes['test']
+  out_name = 'test'
+  save_file_to_pat(content_dict,
+              file_base_dir_out, arff_name_in,
+              no_of_patterns, out_name)
+
+  #### VALIDATE FILE ####
+  content_dict['data'] = data_dict['validate']
+  no_of_patterns = split_sizes['validate']
+  out_name = 'validate'  
+  save_file_to_pat(content_dict,
+              file_base_dir_out, arff_name_in,
+              no_of_patterns, out_name)
+
+#We need something down here
+# else:
+#   #save with normal parameters
+#   content_dict['no_of_patterns'] = split_sizes['train'] #emil we need this value somehow
+#   content_dict['data'] = data_dict['data'] #emil rename data ot data in a diction

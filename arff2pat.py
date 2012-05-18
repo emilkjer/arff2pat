@@ -1,5 +1,26 @@
 #!/usr/bin/python
+###################
+##   SETTINGS    ##
+###################
+file_base_dir = '/home/emil/study/rmit/semester4/data_minig/assignments/ass2/data/stratification/'
+file_base_dir_out  = '/home/emil/study/rmit/semester4/data_minig/assignments/ass2/data/out/'
 
+arff_name_in = 'heart-c-5%'
+pat_name_out = 'heart-c'
+
+content_dict = {  
+                'no_of_inputs'   : 25,
+                'no_of_outputs'  : 5
+               }
+
+split_data_bool = False
+split_sizes = {'train' : 200, 'test' : 53, 'validate' : 50}
+
+###################
+
+###################
+##   METHODS     ##
+###################
 def read_file(filename):
   # Open the file. Room for improvement, but for now
   # remember to close it after reading.
@@ -23,11 +44,10 @@ def write_file(filename, content):
 
 def save_file_to_pat(content_dict,
               file_base_dir_out, arff_name_in,
-              no_of_patterns, out_name):
+              out_name):
   #Save and write the file
   #REMARK Quite a lot of arguments here...
-  content_dict['no_of_patterns'] = no_of_patterns
-  file_name_temp = arff_name_in+'-'+out_name+'.pat'
+  file_name_temp = arff_name_in+out_name+'.pat'
   file_location_out = file_base_dir_out + file_name_temp
   write_file(file_location_out, content_dict)
 
@@ -59,6 +79,7 @@ def read_attribute_line(line_raw):
   #['@attribute ', 'age', ' real\n']
   #['@attribute ', 'sex', ' { female, male}\n']
   line_array = line_raw.split("\'",2)
+  print line_array
   line_end = line_array[2]
   return parse_attributes(line_end)
 
@@ -168,26 +189,11 @@ def translate_list_to_binary(data_list_raw, array_list):
   return data_list_translated
 
 
+
+
 ###################
-##   SETTINGS    ##
+##   EXECUTION   ##
 ###################
-
-file_base_dir = '/home/emil/study/rmit/semester4/data_minig/assignments/ass2/'
-file_base_dir_out  = '/home/emil/study/rmit/semester4/data_minig/assignments/ass2/data/out/'
-
-arff_name_in = 'heart-c'
-pat_name_out = 'heart-c'
-
-content_dict = {  
-                'no_of_inputs'   : 25,
-                'no_of_outputs'  : 5
-               }
-
-split_sizes = {'train' : 200, 'test' : 53, 'validate' : 50}
-split_data_bool = True
-###################
-
-
 
 file_location = file_base_dir + arff_name_in + '.arff'
 file_raw = read_file(file_location)
@@ -213,30 +219,34 @@ if split_data_bool:
 
   #### TRAIN FILE ####
   content_dict['data'] = data_dict['train']
-  no_of_patterns = split_sizes['train']
-  out_name = 'train'
+  content_dict['no_of_patterns'] = split_sizes['train']
+  out_name = '-train'
   save_file_to_pat(content_dict,
               file_base_dir_out, arff_name_in,
-              no_of_patterns, out_name)
+              out_name)
 
   #### TEST FILE ####
   content_dict['data'] = data_dict['test']
-  no_of_patterns = split_sizes['test']
-  out_name = 'test'
+  content_dict['no_of_patterns'] = split_sizes['test']
+  out_name = '-test'
   save_file_to_pat(content_dict,
               file_base_dir_out, arff_name_in,
-              no_of_patterns, out_name)
+              out_name)
 
   #### VALIDATE FILE ####
   content_dict['data'] = data_dict['validate']
-  no_of_patterns = split_sizes['validate']
-  out_name = 'validate'  
+  content_dict['no_of_patterns'] = split_sizes['validate']
+  out_name = '-validate'  
   save_file_to_pat(content_dict,
               file_base_dir_out, arff_name_in,
-              no_of_patterns, out_name)
+              out_name)
 
 #We need something down here
-# else:
-#   #save with normal parameters
-#   content_dict['no_of_patterns'] = split_sizes['train'] #emil we need this value somehow
-#   content_dict['data'] = data_dict['data'] #emil rename data ot data in a diction
+else:
+  #save with normal parameters
+  content_dict['no_of_patterns'] = len(data_list)
+  content_dict['data'] = data_list
+  out_name = ''
+  save_file_to_pat(content_dict,
+              file_base_dir_out, arff_name_in,
+              out_name)

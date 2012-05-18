@@ -2,14 +2,16 @@
 ###################
 ##   SETTINGS    ##
 ###################
+# file_base_dir = '/home/emil/study/rmit/semester4/data_minig/assignments/ass2/data/'
 file_base_dir = '/home/emil/study/rmit/semester4/data_minig/assignments/ass2/data/stratification/'
 file_base_dir_out  = '/home/emil/study/rmit/semester4/data_minig/assignments/ass2/data/out/'
 
+# arff_name_in = 'heart-c'
 arff_name_in = 'heart-c-5%'
 pat_name_out = 'heart-c'
 
 content_dict = {  
-                'no_of_inputs'   : 25,
+                'no_of_inputs'   : 24,
                 'no_of_outputs'  : 5
                }
 
@@ -64,7 +66,7 @@ def parse_attributes(data_string_raw):
   data_string = data_string.rstrip('\n')
 
   #The string can either be a real value or a touple
-  if data_string.startswith('real'):
+  if data_string.startswith('real') or data_string.startswith('numeric'):
     return data_string
   else:
     #Get the values in the string by splitting between {} and split by ,
@@ -74,12 +76,18 @@ def parse_attributes(data_string_raw):
 
 
 def read_attribute_line(line_raw):
+  #TODO We have a bug here if dealing with splitting data
   #Split the line by the ' symbol.
   #Example of output
   #['@attribute ', 'age', ' real\n']
   #['@attribute ', 'sex', ' { female, male}\n']
-  line_array = line_raw.split("\'",2)
+  line_raw = line_raw.rstrip('\n')
+  # line_array = line_raw.replace("\'",'')
+  # print line_array
+  line_array = line_raw.split(' ')
+  print line_raw
   print line_array
+
   line_end = line_array[2]
   return parse_attributes(line_end)
 
@@ -165,6 +173,16 @@ def translate_list_to_binary(data_list_raw, array_list):
     for i, att in enumerate(array_list):
       val = data_cur[i]
 
+      print "String: " + str(data_cur)
+      if len(data_cur) ==0:
+        print "blah"
+        break
+      elif len(data_cur[0]) == 0:
+        print "bloh"
+        break
+
+
+
       #make sure the value is not a question mark
       #REMARK this is a decision based on the data
       if val == '?':
@@ -172,8 +190,10 @@ def translate_list_to_binary(data_list_raw, array_list):
         # The line is invalid and should be skipped
         bad_line = True
 
-      elif att == 'real':
+      elif att == 'real' or att == 'numeric':
         #Keep numeric values
+        print val
+        print att
         data_list_cur.append(float(val))
 
       else:

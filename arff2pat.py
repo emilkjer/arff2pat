@@ -26,14 +26,10 @@ def convert(arff, pat):
 		line_num = 0
 		for line in infile:
 			line_num+=1
-			print(line_num)
-			print(line)
 			if data_found:
-				print("Data found")
 				data.append(line.strip())
 				continue
 			if line.upper().startswith("@ATTRIBUTE"):
-				print("Attribute")
 				attr = {}
 				if     'real' in line \
 					or 'REAL' in line \
@@ -41,8 +37,6 @@ def convert(arff, pat):
 					or 'NUMERIC' in line:
 					
 					values = line.split(' ')
-					print("Values...")
-					print(values)
 					attr['name'] = values[1].strip()
 					attr['type'] = values[2].strip().upper()
 				elif '{' in line:
@@ -55,19 +49,13 @@ def convert(arff, pat):
 					attr['values'] = []
 					i = 0
 					for category in categories:
-						print("Category: %s" % category)
 						attr['values'].append({ 'code': str(i), 'orig': category.strip() })
 						i+=1	
-				print(attr)
 				attributes.append(attr)
 			if line.upper().startswith("@DATA"):
-				print("Data decorator found")
 				data_found = True
 				continue
 
-
-	print(attributes)
-	print(data)
 
 	encoded_data = []
 	## encode data
@@ -89,6 +77,15 @@ def convert(arff, pat):
 		encoded_data = "\n".join(encoded_data)
 		outfile.write(PAT_FILE_CONTENT.format(data_length=data_length, \
 						inputs=inputs,outputs=outputs,data=encoded_data))
+
+	print("File output to: %s" % pat)
+	print("Attribute encoding")
+	class_variable_index = number_attributes - 1
+	for attribute in attributes:
+		print(attribute['name'])
+		if attribute['type'] == 'CATEGORICAL':
+			for value in attribute['values']:
+				print("\t%s -> %s" % (value['orig'], value['code']))
 
 if __name__ == '__main__':
     convert()

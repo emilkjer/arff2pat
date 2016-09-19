@@ -10,7 +10,6 @@ generated at Mon Apr 25 15:58:23 1994
 No. of patterns : {data_length}
 No. of input units : {inputs}
 No. of output units : {outputs}
-
 {data}
 """
 

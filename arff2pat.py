@@ -80,13 +80,22 @@ def convert(arff, pat, testsize):
 		arr = np.array(encoded_data)
 		X, y = (arr[:,:-1], arr[:,-1])
 		X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=testsize)
+		## further split your train into validation
+		X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train, \
+																test_size=testsize)
+		
 		
 		train = np.append(X_train, y_train.reshape(len(y_train),1),1)
+		valid = np.append(X_valid, y_valid.reshape(len(y_valid),1),1)
 		test = np.append(X_test, y_test.reshape(len(y_test),1),1)
 
 		train_len = len(train)
 		train = [" ".join(row) for row in train]
 		train = "\n".join(train)
+
+		valid_len = len(valid)
+		valid = [" ".join(row) for row in valid]
+		valid = "\n".join(valid)
 
 		test_len = len(test)
 		test = [" ".join(row) for row in test]
@@ -96,13 +105,19 @@ def convert(arff, pat, testsize):
 		with open(train_file,'w') as outfile:
 			outfile.write(PAT_FILE_CONTENT.format(data_length=train_len, \
                         inputs=inputs,outputs=outputs,data=train))
-		print("\n\nFile output to: %s" % train_file)
+		print("\n\nFile output to: %s (%d cases)" % (train_file, train_len))
+
+		valid_file = pat.replace('.pat', '.valid.pat')
+		with open(valid_file,'w') as outfile:
+			outfile.write(PAT_FILE_CONTENT.format(data_length=valid_len, \
+                        inputs=inputs,outputs=outputs,data=valid))
+		print("\n\nFile output to: %s (%d cases)" % (valid_file, valid_len))
 
 		test_file = pat.replace('.pat', '.test.pat')
 		with open(test_file, 'w') as outfile:
 			outfile.write(PAT_FILE_CONTENT.format(data_length=test_len, \
                         inputs=inputs,outputs=outputs,data=test))
-		print("\n\nFile output to: %s" % test_file)
+		print("\n\nFile output to: %s (%d cases)" % (test_file, test_len))
 
 	else:
 		data_length = len(encoded_data)

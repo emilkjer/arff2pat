@@ -5,8 +5,8 @@ No. of patterns : 5
 No. of input units : 4
 No. of output units : 2
 
-0 69 70 1 0
-1 81 75 1 0
+2 71 91 0 1
+2 65 70 0 1
 0 72 95 1 1
 2 70 96 1 0
 1 83 86 1 0

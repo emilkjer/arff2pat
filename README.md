@@ -28,7 +28,7 @@ Python 2.7 required
 Enter the names of input arff file, output pat file and the float value of the test split (e.g. 0.33 is 33% of full set goes to test set).
 
 ```
-arff2pat.py --arff=weather.numeric.arff --pat=weather.numeric.pat --testsize=0.33
+./arff2pat.py --arff=weather.numeric.arff --pat=weather.numeric.pat --testsize=0.33
 ```
 
 If test size is set to 0.0 it will only convert the supplied file directly to an equivalent pat file.

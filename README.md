@@ -34,6 +34,7 @@ If test size is set to 0.0 it will only convert the supplied file directly to an
 If test size is > 0.0, train, validation and test files will be generated.
 
 
-## Edits
+## Edits / enhancements in this fork
 
-Edited to take into command line arguments (instead of hard coded paths)
+* Edited to take in command line arguments (instead of hard coded paths etc.)
+* Uses numpy and sklearn train_test_split to split the data (stratified)

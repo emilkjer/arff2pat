@@ -102,19 +102,19 @@ def convert(arff, pat, testsize):
 		test = [" ".join(row) for row in test]
 		test = "\n".join(test)
 				
-		train_file = pat.replace('.pat', '.train.pat')
+		train_file = pat.replace('.pat', '-train.pat')
 		with open(train_file,'w') as outfile:
 			outfile.write(PAT_FILE_CONTENT.format(data_length=train_len, \
                         inputs=inputs,outputs=outputs,data=train))
 		print("\n\nFile output to: %s (%d cases)" % (train_file, train_len))
 
-		valid_file = pat.replace('.pat', '.valid.pat')
+		valid_file = pat.replace('.pat', '-valid.pat')
 		with open(valid_file,'w') as outfile:
 			outfile.write(PAT_FILE_CONTENT.format(data_length=valid_len, \
                         inputs=inputs,outputs=outputs,data=valid))
 		print("\n\nFile output to: %s (%d cases)" % (valid_file, valid_len))
 
-		test_file = pat.replace('.pat', '.test.pat')
+		test_file = pat.replace('.pat', '-test.pat')
 		with open(test_file, 'w') as outfile:
 			outfile.write(PAT_FILE_CONTENT.format(data_length=test_len, \
                         inputs=inputs,outputs=outputs,data=test))

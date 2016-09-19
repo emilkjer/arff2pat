@@ -17,9 +17,7 @@ http://www.ra.cs.uni-tuebingen.de/downloads/JavaNNS/
 
 ## Usage
 
-Python 2.7 required
-
-```pip install numpy scipy sklearn```
+```pip install click numpy scipy sklearn```
 
 ```chmod u+x arff2pat.py```
 

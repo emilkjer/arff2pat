@@ -28,6 +28,8 @@ def convert(arff, pat, testsize):
 		line_num = 0
 		for line in infile:
 			line_num+=1
+			if line.strip().startswith('%'):
+				continue
 			if data_found:
 				data.append(line.strip())
 				continue

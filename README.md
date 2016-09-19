@@ -15,3 +15,7 @@ http://www.cs.waikato.ac.nz/ml/weka/
 Neural Network simulator JavaNNS by Mathematich Naturwissenschaftliche Fakultat:
 http://www.ra.cs.uni-tuebingen.de/downloads/JavaNNS/
 
+
+## Edits
+
+Edited to take into command line arguments (instead of hard coded paths)

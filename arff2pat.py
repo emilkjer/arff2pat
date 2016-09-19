@@ -1,64 +1,78 @@
 #!/usr/bin/python
-###################
-##   SETTINGS    ##
-###################
-# file_base_dir = '/home/emil/study/rmit/semester4/data_minig/assignments/ass2/data/'
-file_base_dir = '/home/emil/study/rmit/semester4/data_minig/assignments/ass2/data/stratification/'
-file_base_dir_out  = '/home/emil/study/rmit/semester4/data_minig/assignments/ass2/data/out/'
-
-# arff_name_in = 'heart-c'
-arff_name_in = 'heart-c-5%'
-pat_name_out = 'heart-c'
-
-content_dict = {  
-                'no_of_inputs'   : 24,
-                'no_of_outputs'  : 5
-               }
-
-split_data_bool = False
-split_sizes = {'train' : 200, 'test' : 53, 'validate' : 50}
-
-###################
-
-###################
-##   METHODS     ##
-###################
-def read_file(filename):
-  # Open the file. Room for improvement, but for now
-  # remember to close it after reading.
-  f = open(filename, 'r')
-  return f
-
-def write_file(filename, content):
-  #Write file with correct headers
-  f = open(filename, 'w')
-  f.write("SNNS pattern definition file V3.2\n")
-  f.write("generated at Mon Apr 25 15:58:23 1994\n")
-  f.write("\n")
-  f.write("No. of patterns : "+str(len(content['data']))+"\n")
-  f.write("No. of input units : "+str(content['no_of_inputs'])+"\n")
-  f.write("No. of output units : "+str(content['no_of_outputs'])+"\n")
-  f.write("\n")
-  for data in content['data']:
-    data_string = convert_list_to_string(data)
-    f.write(data_string+"\n")
-  f.close()
-
-def save_file_to_pat(content_dict,
-              file_base_dir_out, arff_name_in,
-              out_name):
-  #Save and write the file
-  #REMARK Quite a lot of arguments here...
-  file_name_temp = arff_name_in+out_name+'.pat'
-  file_location_out = file_base_dir_out + file_name_temp
-  write_file(file_location_out, content_dict)
 
 
-def convert_list_to_string(list_raw):
-  #Merge the list and replace the comma with a space
-  list_string = ' '.join(map(str, list_raw))    
-  return list_string
+PAT_FILE_CONTENT = 
+"""
+SNNS pattern definition file V3.2
+generated at Mon Apr 25 15:58:23 1994
 
+No. of patterns : {data_length}
+No. of input units : {inputs}
+No. of output units : {outputs}
+
+{data}
+"""
+
+import click
+
+@click.command()
+@click.option('--arff', help='The input ARFF file')
+@click.option('--pat', help='The output PAT file')
+@click.option('--target', help='The name of the class variable')
+@click.option('--train', help='Size of train split')
+@click.option('--test', help='Size of test split')
+@click.option('--validate', help='Size of validate split')
+@click.option('--split', help='Split data true/false')
+def convert(arff, pat, target, train, test, validate, split):
+	""" Converts arff file to pat file for moving data between weka and javanns """
+
+	split_data_bool = (split == "true")
+	split_sizes = {'train' : int(train), 'test' : int(test), 'validate' : int(validate)}
+
+	with open(arff) as infile:
+		attribute_count = 0
+		output_count = 0
+		data_found = False
+		data = []
+
+		
+		for line in infile:
+			if data_found:
+				data.append(line.strip())
+				continue
+			if line.strip()[0] == '%':
+				continue
+			if len(line.strip()) == 0:
+				continue
+			if line.startswith("@ATTRIBUTE {target}".format(target=target)):
+				## get number of output units
+				line = line.strip()
+				classes = line[line.index('{'):-1]
+				classes = classes.split(',')
+				output_count = len(classes)
+			if line.startswith("@ATTRIBUTE"):
+				if '{' in line:
+					## need to encode
+					line = line.strip()
+					non_numerics = line[line.index('{'}:-1]
+					non_numerics = non_numerics.split(',')
+					
+					
+				attribute_count+=1
+			if line.startswith("@DATA"):
+				data_found = True
+				continue
+
+	with open(pat, 'w') as outfile:
+		data = "\n".join(data)
+		data = data.replace(","," ")
+		data.replace("TRUE",1)
+		data.replace("FALSE",0)
+		data.replace('yes', 1)
+		data.repalce('no', 0)
+		outfile.write(file_content.format(data_length=data_length, inputs=inputs,outputs=outputs,data=data)
+
+			
 def parse_attributes(data_string_raw):
   #Clean the raw string for spaces
   data_string = data_string_raw.replace(' ', '')
@@ -74,53 +88,6 @@ def parse_attributes(data_string_raw):
     s_array = s_touple.split(',')
     return s_array
 
-
-def read_attribute_line(line_raw):
-  #TODO We have a bug here if dealing with splitting data
-  #Split the line by the ' symbol.
-  #Example of output
-  #['@attribute ', 'age', ' real\n']
-  #['@attribute ', 'sex', ' { female, male}\n']
-  line_raw = line_raw.rstrip('\n')
-  # line_array = line_raw.replace("\'",'')
-  # print line_array
-  line_array = line_raw.split(' ')
-  print line_raw
-  print line_array
-
-  line_end = line_array[2]
-  return parse_attributes(line_end)
-
-def read_data_line(line_raw):
-  #Clean the raw string for spaces
-  data_string = line_raw.replace(' ', '')
-  #Clean the raw string for newlines
-  data_string = data_string.rstrip('\n')
-  #Split by , and return
-  data_array = data_string.split(',')
-  return data_array
-
-def substract_information_from_file(file_object):
-  #An ordered list of attributes
-  list_attributes = []
-  #An ordered list of data
-  list_data = []
-
-  #Go through each line in the file and substract attributes and data
-  for line in file_object:
-    #Read attributes
-    if line.startswith('@attribute'):
-      attribute = read_attribute_line(line)
-      list_attributes.append(attribute)
-
-    #Read all data to the end of the file
-    if line.startswith('@data'):
-      for line_data_raw in file_object:
-        data = read_data_line(line_data_raw)
-        list_data.append(data)
-
-  file_dict = {'list_attributes' : list_attributes, 'list_data' :list_data}
-  return file_dict
 
 def shuffle_list(list_raw):
   import random

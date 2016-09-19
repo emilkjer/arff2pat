@@ -38,7 +38,7 @@ def convert(arff, pat, testsize):
 					or 'numeric' in line \
 					or 'NUMERIC' in line:
 					
-					values = line.split(' ')
+					values = line.split()
 					attr['name'] = values[1].strip()
 					attr['type'] = values[2].strip().upper()
 				elif '{' in line:

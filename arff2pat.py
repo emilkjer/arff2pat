@@ -25,6 +25,7 @@ def convert(arff, pat, testsize,validationsize):
 		attributes = [] ## we assume the last attribute is alwys the class
 		data_found = False
 		data = []
+		rows_with_missing_data = 0
 
 		line_num = 0
 		for line in infile:
@@ -32,7 +33,10 @@ def convert(arff, pat, testsize,validationsize):
 			if line.strip().startswith('%'):
 				continue
 			if data_found:
-				data.append(line.strip())
+				if '?' in line: # ignore lines with missing values
+					rows_with_missing_data+=1
+				else:
+					data.append(line.strip())
 				continue
 			if line.upper().startswith("@ATTRIBUTE"):
 				attr = {}
@@ -148,6 +152,8 @@ def convert(arff, pat, testsize,validationsize):
 						inputs=inputs,outputs=outputs,data=encoded_data))
 
 		print("\n\nFile output to: %s" % pat)
+
+	print("\nDiscarded %d cases with missing data" % rows_with_missing_data)
 	print("\nAttribute encoding")
 	class_variable_index = number_attributes - 1
 	for attribute in attributes:

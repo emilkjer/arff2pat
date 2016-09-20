@@ -17,7 +17,15 @@ http://www.ra.cs.uni-tuebingen.de/downloads/JavaNNS/
 
 ## Usage
 
-```pip install click numpy scipy sklearn```
+You'll need python on your system. To check, open a terminal and type ```python --version```
+
+If you don't have python already installed, download [MiniConda](http://conda.pydata.org/miniconda.html) and install. 
+
+Next you need to install the correct modules for python.
+
+If you have conda, ```conda install click numpy scipy sklearn``` or otherwise, ```pip install click numpy scipy sklearn```
+
+Either git clone or download this repositiory and from the directory you can run the following:
 
 ```chmod u+x arff2pat.py```
 

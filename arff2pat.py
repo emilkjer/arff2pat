@@ -16,8 +16,8 @@ No. of output units : {outputs}
 @click.command()
 @click.option('--arff', prompt='ARFF file', help='The input ARFF file')
 @click.option('--pat', prompt='Output pat file', help='The output PAT file')
-@click.option('--testsize', prompt='Test set size [0.0,1.0]', help='The size of the test set as a float [0.0,1.0]')
-@click.option('--validationsize', prompt='Validation set size [0.0,1.0]', help='The size of the validation set as a float [0.0,1.0]')
+@click.option('--testsize', prompt='Test set size (between 0.0,1.0)', help='The size of the test set as a float (between 0.0,1.0)', default=0.33)
+@click.option('--validationsize', prompt='Validation set size (between 0.0,1.0)', help='The size of the validation set as a float (between 0.0,1.0)', default=0.33)
 def convert(arff, pat, testsize,validationsize):
 	""" Converts arff file to pat file for moving data between weka and javanns """
 	## process arff file contents

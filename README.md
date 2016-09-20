@@ -23,7 +23,7 @@ http://www.ra.cs.uni-tuebingen.de/downloads/JavaNNS/
 
 ```./arff2pat.py``` or ```python arff2pat.py```
 
-Enter the names of input arff file, output pat file and the float value of the test split (e.g. 0.33 is 33% of full set goes to test set).
+Enter the names of input arff file, output pat file and float values for the test split (e.g. 0.33 is 33% of full set goes to test set) and validation split.
 
 ```
 ./arff2pat.py --arff=weather.numeric.arff --pat=weather.numeric.pat --testsize=0.33 --validationsize=0.1
@@ -31,7 +31,7 @@ Enter the names of input arff file, output pat file and the float value of the t
 
 If test size is set to 0.0 it will only convert the supplied file directly to an equivalent pat file.
 
-If test size is > 0.0, train, validation and test files will be generated.
+If test size is > 0.0, train, validation (if validation size > 0.0)  and test files will be generated.
 
 
 ## Edits / enhancements in this fork

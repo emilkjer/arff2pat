@@ -53,15 +53,29 @@ def convert(arff, pat, testsize):
 					attr['values'] = []
 					i = 0
 					for category in categories:
-						attr['values'].append({ 'code': str(i), 'orig': category.strip() })
+						attr['values'].append({ 'code': i, 'orig': category.strip() })
 						i+=1	
 				attributes.append(attr)
 			if line.upper().startswith("@DATA"):
 				data_found = True
 				continue
 
+	
 
 	encoded_data = []
+	testsize = float(testsize)
+	number_attributes = len(attributes)
+	inputs = number_attributes - 1
+	class_attribute_vals = attributes[number_attributes-1]['values']
+	outputs = len(class_attribute_vals) #len(attributes[number_attributes-1]['values'])
+	
+	## re encode class variable
+	for code in attributes[number_attributes-1]['values']:
+		idx = code['code']
+		outs = ['0' for i in range(outputs)]
+		outs[idx] = '1'
+		code['code'] = " ".join(outs)
+
 	## encode data
 	for d in data:
 		fields = d.split(',')
@@ -69,13 +83,18 @@ def convert(arff, pat, testsize):
 			if attributes[i]['type'] == 'CATEGORICAL':
 				for code in attributes[i]['values']:
 					if fields[i].strip() == code['orig']: 
+						## if its the class variable, split it out into 0,1 code
+						#if i == outputs-1:
+						#	idx = code['code']
+						#	outs = ['0' for i in range(outputs)]
+						#	outs[idx] = '1'
+						#	fields[i] = " ".join(outs)
+						#else: # any other non-numeric encoded variable
+						#	fields[i] = str(code['code'])
 						fields[i] = code['code']
+						
 		encoded_data.append(fields)
 
-	testsize = float(testsize)
-	number_attributes = len(attributes)
-	inputs = number_attributes - 1
-	outputs = len(attributes[number_attributes-1]['values'])
 	
 	if testsize	> 0.0:
 		arr = np.array(encoded_data)

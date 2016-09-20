@@ -82,15 +82,7 @@ def convert(arff, pat, testsize):
 		for i in range(0, len(fields)):
 			if attributes[i]['type'] == 'CATEGORICAL':
 				for code in attributes[i]['values']:
-					if fields[i].strip() == code['orig']: 
-						## if its the class variable, split it out into 0,1 code
-						#if i == outputs-1:
-						#	idx = code['code']
-						#	outs = ['0' for i in range(outputs)]
-						#	outs[idx] = '1'
-						#	fields[i] = " ".join(outs)
-						#else: # any other non-numeric encoded variable
-						#	fields[i] = str(code['code'])
+					if fields[i] == code['orig']: 
 						fields[i] = code['code']
 						
 		encoded_data.append(fields)
@@ -154,6 +146,8 @@ def convert(arff, pat, testsize):
 		if attribute['type'] == 'CATEGORICAL':
 			for value in attribute['values']:
 					print("\t%s -> %s" % (value['orig'], value['code']))
+		else:
+			print("\t%s" % attribute['type'])
 
 if __name__ == '__main__':
     convert()

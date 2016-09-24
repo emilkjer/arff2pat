@@ -41,6 +41,7 @@ If test size is set to 0.0 it will only convert the supplied file directly to an
 
 If test size is > 0.0, train, validation (if validation size > 0.0)  and test files will be generated.
 
+If any rows contain missing data (? values) these will be discarded before the train/test/validation split (or before the output where no split required).
 
 ## Edits / enhancements in this fork
 

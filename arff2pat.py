@@ -1,272 +1,168 @@
-#!/usr/bin/python
-###################
-##   SETTINGS    ##
-###################
-# file_base_dir = '/home/emil/study/rmit/semester4/data_minig/assignments/ass2/data/'
-file_base_dir = '/home/emil/study/rmit/semester4/data_minig/assignments/ass2/data/stratification/'
-file_base_dir_out  = '/home/emil/study/rmit/semester4/data_minig/assignments/ass2/data/out/'
+#!/usr/bin/env python
 
-# arff_name_in = 'heart-c'
-arff_name_in = 'heart-c-5%'
-pat_name_out = 'heart-c'
+import click
+import numpy as np
+from sklearn.cross_validation import train_test_split
 
-content_dict = {  
-                'no_of_inputs'   : 24,
-                'no_of_outputs'  : 5
-               }
+PAT_FILE_CONTENT = """SNNS pattern definition file V3.2
+generated at Mon Apr 25 15:58:23 1994
 
-split_data_bool = False
-split_sizes = {'train' : 200, 'test' : 53, 'validate' : 50}
+No. of patterns : {data_length}
+No. of input units : {inputs}
+No. of output units : {outputs}
+{data}
+"""
 
-###################
+@click.command()
+@click.option('--arff', prompt='ARFF file', help='The input ARFF file')
+@click.option('--pat', prompt='Output pat file', help='The output PAT file')
+@click.option('--testsize', prompt='Test set size (between 0.0,1.0)', help='The size of the test set as a float (between 0.0,1.0)', default=0.33)
+@click.option('--validationsize', prompt='Validation set size (between 0.0,1.0)', help='The size of the validation set as a float (between 0.0,1.0)', default=0.33)
+def convert(arff, pat, testsize,validationsize):
+	""" Converts arff file to pat file for moving data between weka and javanns """
+	## process arff file contents
+	with open(arff) as infile:
+		attributes = [] ## we assume the last attribute is alwys the class
+		data_found = False
+		data = []
+		rows_with_missing_data = 0
 
-###################
-##   METHODS     ##
-###################
-def read_file(filename):
-  # Open the file. Room for improvement, but for now
-  # remember to close it after reading.
-  f = open(filename, 'r')
-  return f
+		line_num = 0
+		for line in infile:
+			line_num+=1
+			if line.strip().startswith('%'):
+				continue
+			if data_found:
+				if '?' in line: # ignore lines with missing values
+					rows_with_missing_data+=1
+				else:
+					data.append(line.strip())
+				continue
+			if line.upper().startswith("@ATTRIBUTE"):
+				attr = {}
+				if     'real' in line \
+					or 'REAL' in line \
+					or 'numeric' in line \
+					or 'NUMERIC' in line:
+					
+					values = line.split()
+					attr['name'] = values[1].strip()
+					attr['type'] = values[2].strip().upper()
+				elif '{' in line:
+					## need to encode
+					line = line.strip()
+					categories = line[line.index('{')+1:-1]
+					categories = categories.split(',')
+					attr['name'] = line.split(' ')[1]
+					attr['type'] = 'CATEGORICAL'
+					attr['values'] = []
+					i = 0
+					for category in categories:
+						attr['values'].append({ 'code': i, 'orig': category.strip() })
+						i+=1	
+				attributes.append(attr)
+			if line.upper().startswith("@DATA"):
+				data_found = True
+				continue
 
-def write_file(filename, content):
-  #Write file with correct headers
-  f = open(filename, 'w')
-  f.write("SNNS pattern definition file V3.2\n")
-  f.write("generated at Mon Apr 25 15:58:23 1994\n")
-  f.write("\n")
-  f.write("No. of patterns : "+str(len(content['data']))+"\n")
-  f.write("No. of input units : "+str(content['no_of_inputs'])+"\n")
-  f.write("No. of output units : "+str(content['no_of_outputs'])+"\n")
-  f.write("\n")
-  for data in content['data']:
-    data_string = convert_list_to_string(data)
-    f.write(data_string+"\n")
-  f.close()
+	
 
-def save_file_to_pat(content_dict,
-              file_base_dir_out, arff_name_in,
-              out_name):
-  #Save and write the file
-  #REMARK Quite a lot of arguments here...
-  file_name_temp = arff_name_in+out_name+'.pat'
-  file_location_out = file_base_dir_out + file_name_temp
-  write_file(file_location_out, content_dict)
+	encoded_data = []
+	testsize = float(testsize)
+	validationsize = float(validationsize)
+	number_attributes = len(attributes)
+	inputs = number_attributes - 1
+	class_attribute_vals = attributes[number_attributes-1]['values']
+	outputs = len(class_attribute_vals) #len(attributes[number_attributes-1]['values'])
+	
+	## re encode class variable
+	for code in attributes[number_attributes-1]['values']:
+		idx = code['code']
+		outs = ['0' for i in range(outputs)]
+		outs[idx] = '1'
+		code['code'] = " ".join(outs)
 
+	## encode data
+	for d in data:
+		fields = d.split(',')
+		for i in range(0, len(fields)):
+			if attributes[i]['type'] == 'CATEGORICAL':
+				for code in attributes[i]['values']:
+					if fields[i] == code['orig']: 
+						fields[i] = code['code']
+						
+		encoded_data.append(fields)
 
-def convert_list_to_string(list_raw):
-  #Merge the list and replace the comma with a space
-  list_string = ' '.join(map(str, list_raw))    
-  return list_string
+	
+	if testsize	> 0.0:
 
-def parse_attributes(data_string_raw):
-  #Clean the raw string for spaces
-  data_string = data_string_raw.replace(' ', '')
-  #Clean the raw string for newlines
-  data_string = data_string.rstrip('\n')
+		do_validation_split = (validationsize > 0.0)
 
-  #The string can either be a real value or a touple
-  if data_string.startswith('real') or data_string.startswith('numeric'):
-    return data_string
-  else:
-    #Get the values in the string by splitting between {} and split by ,
-    s_touple = data_string.split('{', 1)[1].split('}')[0]
-    s_array = s_touple.split(',')
-    return s_array
+		arr = np.array(encoded_data)
+		X, y = (arr[:,:-1], arr[:,-1])
+		X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=testsize)
+		## further split your train into validation if required
+		if do_validation_split:
+			X_train, X_valid, y_train, y_valid = \
+				train_test_split(X_train, y_train, \
+								test_size=validationsize)
+		
+		train = np.append(X_train, y_train.reshape(len(y_train),1),1)
+		if do_validation_split:
+			valid = np.append(X_valid, y_valid.reshape(len(y_valid),1),1)
+		test = np.append(X_test, y_test.reshape(len(y_test),1),1)
 
+		train_len = len(train)
+		train = [" ".join(row) for row in train]
+		train = "\n".join(train)
 
-def read_attribute_line(line_raw):
-  #TODO We have a bug here if dealing with splitting data
-  #Split the line by the ' symbol.
-  #Example of output
-  #['@attribute ', 'age', ' real\n']
-  #['@attribute ', 'sex', ' { female, male}\n']
-  line_raw = line_raw.rstrip('\n')
-  # line_array = line_raw.replace("\'",'')
-  # print line_array
-  line_array = line_raw.split(' ')
-  print line_raw
-  print line_array
+		if do_validation_split:
+			valid_len = len(valid)
+			valid = [" ".join(row) for row in valid]
+			valid = "\n".join(valid)
 
-  line_end = line_array[2]
-  return parse_attributes(line_end)
+		test_len = len(test)
+		test = [" ".join(row) for row in test]
+		test = "\n".join(test)
+				
+		train_file = pat.replace('.pat', '-train.pat')
+		with open(train_file,'w') as outfile:
+			outfile.write(PAT_FILE_CONTENT.format(data_length=train_len, \
+                        inputs=inputs,outputs=outputs,data=train))
+		print("\n\nFile output to: %s (%d cases)" % (train_file, train_len))
 
-def read_data_line(line_raw):
-  #Clean the raw string for spaces
-  data_string = line_raw.replace(' ', '')
-  #Clean the raw string for newlines
-  data_string = data_string.rstrip('\n')
-  #Split by , and return
-  data_array = data_string.split(',')
-  return data_array
+		if do_validation_split:
+			valid_file = pat.replace('.pat', '-valid.pat')
+			with open(valid_file,'w') as outfile:
+				outfile.write(PAT_FILE_CONTENT.format(data_length=valid_len, \
+                	        inputs=inputs,outputs=outputs,data=valid))
+			print("\n\nFile output to: %s (%d cases)" % (valid_file, valid_len))
 
-def substract_information_from_file(file_object):
-  #An ordered list of attributes
-  list_attributes = []
-  #An ordered list of data
-  list_data = []
+		test_file = pat.replace('.pat', '-test.pat')
+		with open(test_file, 'w') as outfile:
+			outfile.write(PAT_FILE_CONTENT.format(data_length=test_len, \
+                        inputs=inputs,outputs=outputs,data=test))
+		print("\n\nFile output to: %s (%d cases)" % (test_file, test_len))
 
-  #Go through each line in the file and substract attributes and data
-  for line in file_object:
-    #Read attributes
-    if line.startswith('@attribute'):
-      attribute = read_attribute_line(line)
-      list_attributes.append(attribute)
+	else: # no splitting required 
+		data_length = len(encoded_data)
+		with open(pat, 'w') as outfile:
+			encoded_data = "\n".join(encoded_data)
+			outfile.write(PAT_FILE_CONTENT.format(data_length=data_length, \
+						inputs=inputs,outputs=outputs,data=encoded_data))
 
-    #Read all data to the end of the file
-    if line.startswith('@data'):
-      for line_data_raw in file_object:
-        data = read_data_line(line_data_raw)
-        list_data.append(data)
+		print("\n\nFile output to: %s" % pat)
 
-  file_dict = {'list_attributes' : list_attributes, 'list_data' :list_data}
-  return file_dict
+	print("\nDiscarded %d cases with missing data" % rows_with_missing_data)
+	print("\nAttribute encoding")
+	class_variable_index = number_attributes - 1
+	for attribute in attributes:
+		print(attribute['name'])
+		if attribute['type'] == 'CATEGORICAL':
+			for value in attribute['values']:
+					print("\t%s -> %s" % (value['orig'], value['code']))
+		else:
+			print("\t%s" % attribute['type'])
 
-def shuffle_list(list_raw):
-  import random
-  list_shuffled = random.shuffle(list_raw, random.random)
-  return list_raw
-
-def split_data(data_list_raw, split_sizes):
-  #To get train, test and validation data split it in defined sizes
-  #Update, we need to stratisfy the data and will do that with Weka
-  train_list = data_list_raw[:split_sizes['train']:]
-
-  test_from = split_sizes['train']
-  test_to = split_sizes['train']+split_sizes['test']
-  test_list = data_list_raw[test_from:test_to]
-
-  validate_from = test_to
-  validate_to = test_to+split_sizes['validate']
-  validate_list = data_list_raw[validate_from: validate_to]
-
-  data_split_dict = {'train' : train_list,
-                     'test' : test_list, 
-                     'validate' : validate_list}
-  return data_split_dict
-
-def find_touple_index(value, array):
-  #Get the index value in an array
-  return array.index(value)
-
-def return_binary_array(true_index, in_array):
-  #Translate and convert to binary array
-  bin_array = []
-  for index, val in enumerate(in_array):
-    if index != true_index:
-      bin_array.append(0)
-    else:
-      bin_array.append(1)
-  return bin_array
-
-def find_and_return_bin_array(value, in_array):
-  #Get a binary value based on a value in an array
-  array_index = find_touple_index(value, in_array)
-  return return_binary_array(array_index, in_array)
-
-
-def translate_list_to_binary(data_list_raw, array_list):
-  data_list_translated = []
-  for data_cur in data_list_raw:
-    data_list_cur = []
-    bad_line = False
-    for i, att in enumerate(array_list):
-      val = data_cur[i]
-
-      print "String: " + str(data_cur)
-      if len(data_cur) ==0:
-        print "blah"
-        break
-      elif len(data_cur[0]) == 0:
-        print "bloh"
-        break
-
-
-
-      #make sure the value is not a question mark
-      #REMARK this is a decision based on the data
-      if val == '?':
-        # data_list_cur.append(val)
-        # The line is invalid and should be skipped
-        bad_line = True
-
-      elif att == 'real' or att == 'numeric':
-        #Keep numeric values
-        print val
-        print att
-        data_list_cur.append(float(val))
-
-      else:
-        #Convert attributes of arrays to binary values.
-        #REMARK this can be done differently
-        val_translated = find_and_return_bin_array(val, att)
-        val_trans_clean = convert_list_to_string(val_translated)
-        data_list_cur.append(val_trans_clean)
-    #If something is wrong with the line, skip it...
-    if bad_line:
-      continue
-    data_list_translated.append(data_list_cur)
-  return data_list_translated
-
-
-
-
-###################
-##   EXECUTION   ##
-###################
-
-file_location = file_base_dir + arff_name_in + '.arff'
-file_raw = read_file(file_location)
-file_dict = substract_information_from_file(file_raw)
-file_raw.close()
-
-#Get the data and attributes as out
-data_list = file_dict['list_data']
-attributes_list = file_dict['list_attributes']
-
-#Translate the data to binary values
-data_list = translate_list_to_binary(data_list, attributes_list)
-
-if split_data_bool:
-  #Save the data for test, train and validation
-
-  #shuffle the data
-  shuffle_list(data_list)
-
-  data_dict = split_data(data_list, split_sizes)
-  #As an excample print the test data:
-  #print data_dict['test']
-
-  #### TRAIN FILE ####
-  content_dict['data'] = data_dict['train']
-  content_dict['no_of_patterns'] = split_sizes['train']
-  out_name = '-train'
-  save_file_to_pat(content_dict,
-              file_base_dir_out, arff_name_in,
-              out_name)
-
-  #### TEST FILE ####
-  content_dict['data'] = data_dict['test']
-  content_dict['no_of_patterns'] = split_sizes['test']
-  out_name = '-test'
-  save_file_to_pat(content_dict,
-              file_base_dir_out, arff_name_in,
-              out_name)
-
-  #### VALIDATE FILE ####
-  content_dict['data'] = data_dict['validate']
-  content_dict['no_of_patterns'] = split_sizes['validate']
-  out_name = '-validate'  
-  save_file_to_pat(content_dict,
-              file_base_dir_out, arff_name_in,
-              out_name)
-
-#We need something down here
-else:
-  #save with normal parameters
-  content_dict['no_of_patterns'] = len(data_list)
-  content_dict['data'] = data_list
-  out_name = ''
-  save_file_to_pat(content_dict,
-              file_base_dir_out, arff_name_in,
-              out_name)
+if __name__ == '__main__':
+    convert()

@@ -23,6 +23,7 @@ more information
 import click
 import numpy as np
 from sklearn.cross_validation import train_test_split
+from sklearn.preprocessing import MinMaxScaler
 
 PAT_FILE_CONTENT = """SNNS pattern definition file V3.2
 generated at Mon Apr 25 15:58:23 1994
@@ -118,7 +119,6 @@ def convert(arff, pat, testsize,validationsize):
 
     # encode the data
     encoded_data = []
-
     inputs = sum([len(attr['values']) for attr in attributes]) - outputs
 
     ## encode data
@@ -132,8 +132,16 @@ def convert(arff, pat, testsize,validationsize):
 
         encoded_data.append(fields)
 
+    # if class variable is numeric, scale [0,1]
+    if attributes[-1]['type'] != 'NOMINAL':
+        encoded_data_np = np.array(encoded_data)
+        class_vars = encoded_data_np[:,-1]
+        min_max_scaler = MinMaxScaler()
+        scaled_class_vars = min_max_scaler.fit_transform(class_vars.reshape(-1,1))
+        encoded_data_np[:,-1] = scaled_class_vars.reshape(len(class_vars))
+        encoded_data = encoded_data_np.tolist()
 
-    if testsize    > 0.0:
+    if testsize > 0.0:
 
         do_validation_split = (validationsize > 0.0)
 
